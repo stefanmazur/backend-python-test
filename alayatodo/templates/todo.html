@@ -8,7 +8,20 @@
         <tr>
             <td>{{ todo.id }}</td>
             <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
+            <td {% if todo.completed %}class="markedcompleted"{% endif %}>{{ todo.description }}</td>
+	    {% if todo.completed %}
+	        <td>
+                    <form method="post" action="{{ url_for('todo_uncomplete', id=todo.id) }}">
+                        <button type="submit" class="btn btn-xs btn-warning"><span class="glyphicon glyphicon-unchecked glyphicon-white"></span></button>
+                    </form>
+                </td>
+	    {% else %}
+	        <td>
+                    <form method="post" action="{{ url_for('todo_complete', id=todo.id) }}">
+                        <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-check glyphicon-white"></span></button>
+                    </form>
+                </td>
+	    {% endif %}
             <td>
                 <form method="post" action="{{ url_for('todo_delete', id=todo.id) }}">
                     <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
