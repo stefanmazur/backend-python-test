@@ -5,7 +5,9 @@ from flask import (
     render_template,
     request,
     session,
-    flash
+    flash,
+    jsonify,
+    abort
     )
 
 
@@ -103,3 +105,12 @@ def todo_uncomplete(id):
     g.db.execute("UPDATE todos SET completed = 0 WHERE id ='%s'" % id)
     g.db.commit()
     return redirect('/todo')
+
+@app.route('/todo/<id>/json', methods=['GET'])
+@app.route('/todo/<id>/json/', methods=['GET'])
+def todo_json(id):
+    cur = g.db.execute("SELECT * FROM todos WHERE id ='%s'" % id)
+    todo = cur.fetchone()
+    if not todo:
+        return abort(404)
+    return jsonify(id=todo['id'], user_id=todo['user_id'], description=todo['description'], completed=todo['completed'])
