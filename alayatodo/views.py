@@ -4,7 +4,8 @@ from flask import (
     redirect,
     render_template,
     request,
-    session
+    session,
+    flash
     )
 
 
@@ -65,11 +66,17 @@ def todos():
 def todos_POST():
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute(
-        "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
-        % (session['user']['id'], request.form.get('description', ''))
-    )
-    g.db.commit()
+
+    description = request.form.get('description')
+    if len(description) > 0:
+        g.db.execute(
+            "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
+            % (session['user']['id'], request.form.get('description', ''))
+        )
+        g.db.commit()
+    else:
+        flash('You must provide a description')
+        
     return redirect('/todo')
 
 
