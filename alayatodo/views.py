@@ -78,7 +78,8 @@ def todos_POST():
         g.db.commit()
     else:
         flash('You must provide a description')
-        
+
+    flash('Todo inserted')    
     return redirect('/todo')
 
 
@@ -88,6 +89,8 @@ def todo_delete(id):
         return redirect('/login')
     g.db.execute("DELETE FROM todos WHERE id ='%s'" % id)
     g.db.commit()
+
+    flash('Todo deleted')
     return redirect('/todo')
 
 @app.route('/todo/complete/<id>', methods=['POST'])
@@ -96,6 +99,8 @@ def todo_complete(id):
         return redirect('/login')
     g.db.execute("UPDATE todos SET completed = 1 WHERE id ='%s'" % id)
     g.db.commit()
+
+    flash('Todo completed')
     return redirect('/todo')
 
 @app.route('/todo/uncomplete/<id>', methods=['POST'])
@@ -104,6 +109,8 @@ def todo_uncomplete(id):
         return redirect('/login')
     g.db.execute("UPDATE todos SET completed = 0 WHERE id ='%s'" % id)
     g.db.commit()
+
+    flash('Todo uncompleted')
     return redirect('/todo')
 
 @app.route('/todo/<id>/json', methods=['GET'])
