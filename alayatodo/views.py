@@ -9,7 +9,9 @@ from flask import (
     jsonify,
     abort
     )
+from math import ceil
 
+PER_PAGE = 5
 
 @app.route('/')
 def home():
@@ -53,14 +55,21 @@ def todo(id):
     return render_template('todo.html', todo=todo)
 
 
-@app.route('/todo', methods=['GET'])
-@app.route('/todo/', methods=['GET'])
-def todos():
+@app.route('/todo', defaults={'page':1}, methods=['GET'])
+@app.route('/todo/', defaults={'page':1}, methods=['GET'])
+@app.route('/todo/page/<int:page>', methods=['GET'])
+@app.route('/todo/page/<int:page>/', methods=['GET'])
+def todos(page):
     if not session.get('logged_in'):
         return redirect('/login')
-    cur = g.db.execute("SELECT * FROM todos")
+
+    cur = g.db.execute("SELECT COUNT(*) FROM todos WHERE user_id=%i" % session['user']['id'])
+    total_items = cur.fetchone()["COUNT(*)"]
+    last_page = int(ceil(total_items / float(PER_PAGE)))
+    
+    cur = g.db.execute("SELECT * FROM todos WHERE user_id = ? LIMIT ? OFFSET ?", (session['user']['id'], PER_PAGE, ((page-1)*PER_PAGE)))
     todos = cur.fetchall()
-    return render_template('todos.html', todos=todos)
+    return render_template('todos.html', todos=todos, page=page, last_page=last_page)
 
 
 @app.route('/todo', methods=['POST'])

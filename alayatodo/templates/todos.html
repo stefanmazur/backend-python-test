@@ -36,7 +36,7 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ url_for('todos_POST') }}">
-                <td colspan="3">
+                <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required>
                 </td>
                 <td>
@@ -45,5 +45,15 @@
             </form>
         </tr>
     </table>
+    <div class="pagin">
+        {% if page > 1 %}
+            <a href="{{ url_for('todos', page=(page - 1)) }}"><span class="glyphicon glyphicon-menu-left glyphicon-white"></span></a>
+        {% endif %}
+        Page {{ page }} of {{ last_page }}</td>
+        {% if page < last_page %}
+            <a href="{{ url_for('todos', page=(page + 1)) }}"><span class="glyphicon glyphicon-menu-right glyphicon-white"></span></a>
+        {% endif %}
+    </div>
 </div>
+
 {% endblock %}
