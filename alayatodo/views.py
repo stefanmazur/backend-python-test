@@ -1,4 +1,7 @@
-from alayatodo import app
+from alayatodo import (
+    app,
+    db
+    )
 from flask import (
     g,
     redirect,
@@ -10,6 +13,10 @@ from flask import (
     abort
     )
 from math import ceil
+from db import (
+    User,
+    Todo
+    )
 
 PER_PAGE = 5
 
@@ -30,11 +37,9 @@ def login_POST():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    sql = "SELECT * FROM users WHERE username = '%s' AND password = '%s'";
-    cur = g.db.execute(sql % (username, password))
-    user = cur.fetchone()
+    user = User.query.filter_by(username=username, password=password).first()
     if user:
-        session['user'] = dict(user)
+        session['user'] = user.id
         session['logged_in'] = True
         return redirect('/todo')
 
@@ -50,8 +55,7 @@ def logout():
 
 @app.route('/todo/<id>', methods=['GET'])
 def todo(id):
-    cur = g.db.execute("SELECT * FROM todos WHERE id ='%s'" % id)
-    todo = cur.fetchone()
+    todo = Todo.query.get(id)
     return render_template('todo.html', todo=todo)
 
 
@@ -63,12 +67,13 @@ def todos(page):
     if not session.get('logged_in'):
         return redirect('/login')
 
-    cur = g.db.execute("SELECT COUNT(*) FROM todos WHERE user_id=%i" % session['user']['id'])
-    total_items = cur.fetchone()["COUNT(*)"]
-    last_page = int(ceil(total_items / float(PER_PAGE)))
+    todos = Todo.query.filter_by(user_id=session['user'])
     
-    cur = g.db.execute("SELECT * FROM todos WHERE user_id = ? LIMIT ? OFFSET ?", (session['user']['id'], PER_PAGE, ((page-1)*PER_PAGE)))
-    todos = cur.fetchall()
+    total_items = todos.count()
+    last_page = int(ceil(total_items / float(PER_PAGE)))
+    todos = todos.limit(PER_PAGE)
+    todos = todos.offset(((page-1)*PER_PAGE))
+    
     return render_template('todos.html', todos=todos, page=page, last_page=last_page)
 
 
@@ -78,13 +83,12 @@ def todos_POST():
     if not session.get('logged_in'):
         return redirect('/login')
 
+    user = User.query.get(session['user'])
     description = request.form.get('description')
     if len(description) > 0:
-        g.db.execute(
-            "INSERT INTO todos (user_id, description) VALUES ('%s', '%s')"
-            % (session['user']['id'], request.form.get('description', ''))
-        )
-        g.db.commit()
+        todo = Todo(user=user, description=description, completed=0)
+        db.session.add(todo)
+        db.session.commit()
     else:
         flash('You must provide a description')
 
@@ -96,8 +100,10 @@ def todos_POST():
 def todo_delete(id):
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute("DELETE FROM todos WHERE id ='%s'" % id)
-    g.db.commit()
+
+    todo = Todo.query.get(id)
+    db.session.delete(todo)
+    db.session.commit()
 
     flash('Todo deleted')
     return redirect('/todo')
@@ -106,8 +112,10 @@ def todo_delete(id):
 def todo_complete(id):
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute("UPDATE todos SET completed = 1 WHERE id ='%s'" % id)
-    g.db.commit()
+
+    todo = Todo.query.get(id)
+    todo.completed = 1
+    db.session.commit();
 
     flash('Todo completed')
     return redirect('/todo')
@@ -116,8 +124,10 @@ def todo_complete(id):
 def todo_uncomplete(id):
     if not session.get('logged_in'):
         return redirect('/login')
-    g.db.execute("UPDATE todos SET completed = 0 WHERE id ='%s'" % id)
-    g.db.commit()
+
+    todo = Todo.query.get(id)
+    todo.completed = 0
+    db.session.commit()
 
     flash('Todo uncompleted')
     return redirect('/todo')
@@ -125,8 +135,7 @@ def todo_uncomplete(id):
 @app.route('/todo/<id>/json', methods=['GET'])
 @app.route('/todo/<id>/json/', methods=['GET'])
 def todo_json(id):
-    cur = g.db.execute("SELECT * FROM todos WHERE id ='%s'" % id)
-    todo = cur.fetchone()
+    todo = Todo.query.get(id)
     if not todo:
         return abort(404)
-    return jsonify(id=todo['id'], user_id=todo['user_id'], description=todo['description'], completed=todo['completed'])
+    return jsonify(id=todo.id, user_id=todo.user.id, description=todo.description, completed=todo.completed)

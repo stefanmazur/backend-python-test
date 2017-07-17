@@ -1,4 +1,4 @@
-Alayacare Python skill test
+﻿Alayacare Python skill test
 ===========================
 
 
@@ -25,6 +25,7 @@ Credentials:
 * python 5.7
 * virtualenv
 * sqlite3
+* Flask-SQLAlchemy
 * A github account
 
 ### Installation

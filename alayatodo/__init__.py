@@ -1,34 +1,21 @@
-from flask import Flask, g
+from flask import Flask, g, session
 import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 
 # configuration
-DATABASE = '/tmp/alayatodo.db'
+DATABASE = 'Repo/backend-python-test/alayatodo.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
 
+SQLALCHEMY_DATABASE_URI = 'sqlite:////' + DATABASE
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-
-
-def connect_db():
-    conn = sqlite3.connect(app.config['DATABASE'])
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-@app.before_request
-def before_request():
-    g.db = connect_db()
-
-
-@app.teardown_request
-def teardown_request(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
-
+db = SQLAlchemy(app)
+db.init_app(app)
 
 import alayatodo.views
+
