@@ -56,8 +56,13 @@ def logout():
 @app.route('/todo/<id>', methods=['GET'])
 def todo(id):
     todo = Todo.query.get(id)
-    return render_template('todo.html', todo=todo)
 
+    if not todo:
+        return abort(404)
+    elif todo.user.id != session['user']:
+        abort(404)
+
+    return render_template('todo.html', todo=todo)
 
 @app.route('/todo', defaults={'page':1}, methods=['GET'])
 @app.route('/todo/', defaults={'page':1}, methods=['GET'])
@@ -102,6 +107,11 @@ def todo_delete(id):
         return redirect('/login')
 
     todo = Todo.query.get(id)
+    if not todo:
+        abort(404)
+    elif todo.user.id != session['user']:
+        abort(404)
+        
     db.session.delete(todo)
     db.session.commit()
 
@@ -114,6 +124,11 @@ def todo_complete(id):
         return redirect('/login')
 
     todo = Todo.query.get(id)
+    if not todo:
+        abort(404)
+    elif todo.user.id != session['user']:
+        abort(404)
+        
     todo.completed = 1
     db.session.commit();
 
@@ -126,6 +141,11 @@ def todo_uncomplete(id):
         return redirect('/login')
 
     todo = Todo.query.get(id)
+    if not todo:
+        abort(404)
+    elif todo.user.id != session['user']:
+        abort(404)
+        
     todo.completed = 0
     db.session.commit()
 
@@ -137,5 +157,8 @@ def todo_uncomplete(id):
 def todo_json(id):
     todo = Todo.query.get(id)
     if not todo:
-        return abort(404)
+        abort(404)
+    elif todo.user.id != session['user']:
+        abort(404)
+        
     return jsonify(id=todo.id, user_id=todo.user.id, description=todo.description, completed=todo.completed)
